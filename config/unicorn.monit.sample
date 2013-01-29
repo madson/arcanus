@@ -1,0 +1,5 @@
+check process unicorn with pidfile /path/to/app/current/tmp/pids/unicorn.pid
+  start program = "/path/to/app/current/scripts/unicorn/start"
+    as uid arcanus and gid arcanus
+  stop program = "/path/to/app/current/scripts/unicorn/stop"
+    as uid arcanus and gid arcanus

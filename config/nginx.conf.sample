@@ -1,0 +1,15 @@
+upstream arcanus_unicorn {
+  server unix:/path/to/app/shared/sockets/unicorn.sock fail_timeout=0;
+}
+
+server {
+  listen 443 ssl;
+  ssl_certificate /etc/nginx/ssl/server.crt;
+  ssl_certificate_key /etc/nginx/ssl/server.key;
+  access_log /path/to/app/shared/log/nginx.access.log;
+  error_log /path/to/app/shared/log/nginx.error.log;
+
+  location / {
+    proxy_pass http://arcanus_unicorn;
+  }
+}

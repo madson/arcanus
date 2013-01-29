@@ -1,0 +1,9 @@
+defaults: &defaults
+  pbkdf_iterations: 70000
+
+development:
+  <<: *defaults
+
+test:
+  <<: *defaults
+  pbkdf_iterations: 1

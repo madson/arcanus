@@ -1,0 +1,12 @@
+coverage
+doc
+bin
+config/*.yml
+config/unicorn.conf
+config/unicorn.monit
+*.swp
+*.patch
+*.gem
+*.sh
+.DS_Store
+.bundle/*
