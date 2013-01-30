@@ -34,9 +34,9 @@ describe App do
     end
   end
 
-  describe "POST /new.json" do
+  describe "POST /entries.json" do
     specify "HTTP 401 will be returned when not authenticated" do
-      post "/new.json"
+      post "/entries.json"
 
       expect(last_response.status).to be == 401
       expect(last_response.body).to include_json(error: "wrong username or password")
@@ -44,7 +44,7 @@ describe App do
 
     specify "HTTP 400 will be returned when invalid params" do
       authorize author.name, author.password
-      post "/new.json", name: "foobar", content: ""
+      post "/entries.json", name: "foobar", content: ""
 
       expect(last_response.status).to be == 400
       expect(last_response.body).to include_json(errors: { content: ["can't be blank"] })
@@ -52,7 +52,7 @@ describe App do
 
     specify "HTTP 200 will be returned when valid params" do
       authorize author.name, author.password
-      post "/new.json", name: "foobar", content: "baz"
+      post "/entries.json", name: "foobar", content: "baz"
 
       expect(last_response.status).to be == 200
       expect(last_response.body).to include_json(message: "created successfully")
@@ -77,17 +77,19 @@ describe App do
 
     it "returns all created entries" do
       authorize author.name, author.password
-      post "/new.json", name: "first", content: "<first>"
-      post "/new.json", name: "second", content: "<second>"
-      post "/new.json", name: "third", content: "<third>"
+      post "/entries.json", name: "first", content: "<first>"
+      post "/entries.json", name: "second", content: "<second>"
+      post "/entries.json", name: "third", content: "<third>"
       get "/entries.json"
 
-      expect(last_response.body).to include_json(entries: ["first", "second", "third"])
+      expect(last_response.body).to include_json(
+        entries: [[anything, "first"], [anything, "second"], [anything, "third"]]
+      )
     end
 
     specify "entries created by others will not be returned" do
       authorize other_author.name, other_author.password
-      post "/new.json", name: "other", content: "<other>"
+      post "/entries.json", name: "other", content: "<other>"
 
       authorize author.name, author.password
       get "/entries.json"
@@ -96,17 +98,17 @@ describe App do
     end
   end
 
-  describe "GET /entries/:name.json" do
+  describe "GET /entries/:id.json" do
     specify "HTTP 401 will be returned when not authenticated" do
-      get "/entries/foobar.json"
+      get "/entries/1234.json"
 
       expect(last_response.status).to be == 401
       expect(last_response.body).to include_json(error: "wrong username or password")
     end
 
-    specify "HTTP 404 will be returned when name is not found" do
+    specify "HTTP 404 will be returned when id is not found" do
       authorize author.name, author.password
-      get "/entries/missing.json"
+      get "/entries/1234.json"
 
       expect(last_response.status).to be == 404
       expect(last_response.body).to include_json(error: "entry not found")
@@ -114,35 +116,40 @@ describe App do
 
     specify "HTTP 200 will be returned when entry found" do
       authorize author.name, author.password
-      post "/new.json", name: "myprecious", content: "thering"
-      get "/entries/myprecious.json"
+      post "/entries.json", name: "myprecious", content: "thering"
+      entry_id = Entry.last.id.to_s
+      get "/entries/#{entry_id}.json"
 
       expect(last_response.status).to be == 200
-      expect(last_response.body).to include_json(name: "myprecious", content: "thering")
+      expect(last_response.body).to include_json(
+        id: entry_id, name: "myprecious", content: "thering"
+      )
     end
 
     specify "entry created by other will not be returned" do
       authorize other_author.name, other_author.password
-      post "/new.json", name: "other", content: "<other>"
+      post "/entries.json", name: "other", content: "<other>"
+
+      entry_id = Entry.last.id.to_s
 
       authorize author.name, author.password
-      get "/entries/other.json"
+      get "/entries/#{entry_id}.json"
 
       expect(last_response.status).to be == 404
     end
   end
 
-  describe "DELETE /entries/:name.json" do
+  describe "DELETE /entries/:id.json" do
     specify "HTTP 401 will be returned when not authenticated" do
-      delete "/entries/foobar.json"
+      delete "/entries/1234.json"
 
       expect(last_response.status).to be == 401
       expect(last_response.body).to include_json(error: "wrong username or password")
     end
 
-    specify "HTTP 404 will be returned when name is not found" do
+    specify "HTTP 404 will be returned when id is not found" do
       authorize author.name, author.password
-      delete "/entries/missing.json"
+      delete "/entries/1234.json"
 
       expect(last_response.status).to be == 404
       expect(last_response.body).to include_json(error: "entry not found")
@@ -150,8 +157,8 @@ describe App do
 
     specify "HTTP 200 will be returned when entry found" do
       authorize author.name, author.password
-      post "/new.json", name: "myprecious", content: "thering"
-      delete "/entries/myprecious.json"
+      post "/entries.json", name: "myprecious", content: "thering"
+      delete "/entries/#{Entry.last.id}.json"
 
       expect(last_response.status).to be == 200
       expect(last_response.body).to include_json(message: "entry destroyed")
@@ -159,9 +166,10 @@ describe App do
 
     it "will destroy entry so it can not be get again" do
       authorize author.name, author.password
-      post "/new.json", name: "myprecious", content: "thering"
-      delete "/entries/myprecious.json"
-      get "/entries/myprecious.json"
+      post "/entries.json", name: "myprecious", content: "thering"
+      entry_id = Entry.last.id.to_s
+      delete "/entries/#{entry_id}.json"
+      get "/entries/#{entry_id}.json"
 
       expect(last_response.status).to be == 404
       expect(last_response.body).to include_json(error: "entry not found")
@@ -169,10 +177,11 @@ describe App do
 
     specify "entry created by other will not be destroyed" do
       authorize other_author.name, other_author.password
-      post "/new.json", name: "other", content: "<other>"
+      post "/entries.json", name: "other", content: "<other>"
 
+      entry_id = Entry.last.id.to_s
       authorize author.name, author.password
-      delete "/entries/other.json"
+      delete "/entries/#{entry_id}.json"
 
       expect(last_response.status).to be == 404
     end

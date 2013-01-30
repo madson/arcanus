@@ -14,7 +14,11 @@ class App < Sinatra::Base
     json name: current_author.name
   end
 
-  post "/new.json" do
+  get "/entries.json" do
+    json entries: current_author.entries.map { |e| [e.id.to_s, e.name] }
+  end
+
+  post "/entries.json" do
     entry = Entry.new(params)
     entry.author   = current_author
     entry.password = current_author_key
@@ -29,25 +33,21 @@ class App < Sinatra::Base
     json errors: entry.errors
   end
 
-  get "/entries.json" do
-    json entries: current_author.entries.map(&:name)
-  end
-
-  get "/entries/:name.json" do
-    entry = current_author.entries.find_by(name: params[:name])
+  get "/entries/:id.json" do
+    entry = current_author.entries.find(params[:id])
 
     unless entry.nil?
       service = EntryService.new(entry)
       content = service.decrypt(current_author_key)
-      return json name: entry.name, content: content
+      return json id: entry.id.to_s, name: entry.name, content: content
     end
 
     status 404
     return json error: "entry not found"
   end
 
-  delete "/entries/:name.json" do
-    entry = current_author.entries.find_by(name: params[:name])
+  delete "/entries/:id.json" do
+    entry = current_author.entries.find(params[:id])
 
     if !entry.nil? && entry.delete
       return json message: "entry destroyed"
