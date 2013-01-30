@@ -34,6 +34,22 @@ describe Api do
     end
   end
 
+  describe "POST /authors.json" do
+    specify "HTTP 400 will be returned when invalid params" do
+      post "/authors.json", name: "joao", password: ""
+
+      expect(last_response.status).to be == 400
+      expect(last_response.body).to include_json(errors: { password: ["can't be blank", "is too short (minimum is 5 characters)"] })
+    end
+
+    specify "HTTP 200 will be returned when valid params" do
+      post "/authors.json", name: "joao", password: "12345"
+
+      expect(last_response.status).to be == 200
+      expect(last_response.body).to include_json(message: "created successfully")
+    end
+  end
+
   describe "POST /entries.json" do
     specify "HTTP 401 will be returned when not authenticated" do
       post "/entries.json"

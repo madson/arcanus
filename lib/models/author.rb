@@ -3,7 +3,7 @@ class Author
 
   attr_accessor :password
 
-  attr_accessible :name
+  attr_accessible :name, :password
 
   field :name
   field :hashed_password, type: Moped::BSON::Binary
