@@ -1,4 +1,4 @@
-class App < Sinatra::Base
+class Api < Sinatra::Base
   include Helpers
 
   before do

@@ -1,7 +1,7 @@
 require "spec_helper"
 
-describe App do
-  def app ; App ; end
+describe Api do
+  def app ; Api ; end
 
   subject { last_response }
 
