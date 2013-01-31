@@ -1,20 +1,22 @@
 class Api < Sinatra::Base
   include Helpers
 
-  before /^(?!\/authors\.json)/ do
+  before do
     content_type :json
     cache_control :private, :must_revalidate, max_age: 0
+  end
 
-    unless authorize
-      halt 401, error_message("wrong username or password")
+  def self.auth(*)
+    condition do
+      authorize || halt(401, error_message("wrong username or password"))
     end
   end
 
-  get "/verify.json" do
+  get "/verify.json", auth: true do
     json name: current_author.name
   end
 
-  get "/entries.json" do
+  get "/entries.json", auth: true do
     json entries: current_author.entries.map { |e| [e.id.to_s, e.name] }
   end
 
@@ -30,7 +32,7 @@ class Api < Sinatra::Base
     json errors: author.errors
   end
 
-  post "/entries.json" do
+  post "/entries.json", auth: true do
     entry = Entry.new(params)
     entry.author   = current_author
     entry.password = current_author_key
@@ -45,7 +47,7 @@ class Api < Sinatra::Base
     json errors: entry.errors
   end
 
-  get "/entries/:id.json" do
+  get "/entries/:id.json", auth: true do
     entry = current_author.entries.find(params[:id])
 
     unless entry.nil?
@@ -58,7 +60,7 @@ class Api < Sinatra::Base
     return json error: "entry not found"
   end
 
-  delete "/entries/:id.json" do
+  delete "/entries/:id.json", auth: true do
     entry = current_author.entries.find(params[:id])
 
     if !entry.nil? && entry.delete
