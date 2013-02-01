@@ -10,3 +10,4 @@ config/unicorn.monit
 *.sh
 .DS_Store
 .bundle/*
+!spec/fixtures/bin

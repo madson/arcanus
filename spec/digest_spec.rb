@@ -1,8 +1,8 @@
 require "spec_helper"
 
 describe Digest do
-  let(:hash_output) { IO.binread("spec/fixtures/hash_output") }
-  let(:kdf_output) { IO.binread("spec/fixtures/kdf_output") }
+  let(:hash_output) { IO.binread("spec/fixtures/bin/hash") }
+  let(:kdf_output) { IO.binread("spec/fixtures/bin/kdf") }
 
   describe ".hash" do
     it "generates a sha512 hash using given password" do

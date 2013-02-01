@@ -3,7 +3,7 @@ require "spec_helper"
 describe EntryService do
   let(:entry) { double }
   let(:decrypted_data) { "<protected data>" }
-  let(:encrypted_data) { IO.binread("spec/fixtures/encrypted_data") }
+  let(:encrypted_data) { IO.binread("spec/fixtures/bin/encrypted_data") }
   let(:password) { "123456" }
   let(:salt) { "A" * 128 }
   let(:iv) { "B" * 16 }

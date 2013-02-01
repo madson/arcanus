@@ -4,7 +4,7 @@ describe AuthorService do
   let(:author) { double }
   let(:salt) { "A" * 64 }
   let(:password) { "123456" }
-  let(:hashed_password) { IO.binread("spec/fixtures/hashed_password") }
+  let(:hashed_password) { IO.binread("spec/fixtures/bin/hashed_password") }
 
   subject { AuthorService.new(author) }
 
