@@ -15,5 +15,6 @@ require "lib/models/entry"
 require "lib/services/author_service"
 require "lib/services/entry_service"
 
+require "lib/digest"
 require "lib/helpers"
 require "lib/api"
