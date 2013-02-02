@@ -2,18 +2,14 @@ require "spec_helper"
 
 describe EntryService do
   let(:entry) { double }
-  let(:decrypted_data) { "<protected data>" }
-  let(:encrypted_data) { IO.binread("spec/fixtures/bin/encrypted_data") }
-  let(:password) { "123456" }
-  let(:salt) { "A" * 128 }
+  let(:content) { "my protected content" }
+  let(:password) { "my password" }
+  let(:encrypted) { "<my encrypted content>" }
+  let(:salt) { "A" * 32 }
   let(:iv) { "B" * 16 }
 
   subject { EntryService.new(entry) }
-
-  before do
-    Setting.stub(pbkdf_iterations: 1)
-    entry.stub(password: password)
-  end
+  before { Setting.stub(pbkdf_iterations: 1) }
 
   describe ".new" do
     it "receives an Entry object" do
@@ -28,15 +24,12 @@ describe EntryService do
     end
 
     it "encrypts the content and then saves the entry" do
-      OpenSSL::Random.stub(:random_bytes) do |bytes|
-        case bytes
-        when 128 then salt
-        when 16 then iv
-        end
-      end
+      OpenSSL::Random.stub(:random_bytes).and_return(salt, iv)
+      entry.stub(valid?: true, content: content, password: password)
 
-      entry.stub(valid?: true, content: decrypted_data)
-      entry.should_receive(:encrypted_data=).with(encrypted_data)
+      Cipher.should_receive(:encrypt).with(password, salt, iv, content).and_return(encrypted)
+
+      entry.should_receive(:encrypted_data=).with("#{salt}#{iv}#{encrypted}")
       entry.should_receive(:save).and_return(true)
 
       expect(subject.save).to be_true
@@ -44,16 +37,11 @@ describe EntryService do
   end
 
   describe "#decrypt" do
-    before { entry.stub(encrypted_data: encrypted_data) }
+    it "returns the decrypted content" do
+      entry.stub(encrypted_data: "#{salt}#{iv}#{encrypted}")
+      Cipher.should_receive(:decrypt).with(password, salt, iv, encrypted).and_return(content)
 
-    it "raises an exception when password is wrong" do
-      expect {
-        subject.decrypt("wrong password")
-      }.to raise_error(EntryService::WrongPassword)
-    end
-
-    it "returns the decrypted data when password is right" do
-      expect(subject.decrypt(password)).to be === decrypted_data
+      expect(subject.decrypt(password)).to be == content
     end
   end
 end
