@@ -16,5 +16,6 @@ require "lib/services/author_service"
 require "lib/services/entry_service"
 
 require "lib/digest"
+require "lib/cipher"
 require "lib/helpers"
 require "lib/api"
