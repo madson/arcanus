@@ -1,20 +1,25 @@
 require "spec_helper"
 
 describe Digest do
-  let(:hash_output) { IO.binread("spec/fixtures/bin/hash") }
-  let(:kdf_output) { IO.binread("spec/fixtures/bin/kdf") }
+  let(:sha512_hash) { OpenSSL::Digest::SHA512.digest("123456") }
+  let(:pbkdf2_hash) { OpenSSL::PKCS5.pbkdf2_hmac("123456", "my salt", 1, 512, "SHA512") }
+  let(:pbkdf2_hash_32) { OpenSSL::PKCS5.pbkdf2_hmac("123456", "my salt", 1, 32, "SHA512") }
 
   describe ".hash" do
-    it "generates a sha512 hash using given password" do
-      expect(Digest.hash("123456")).to be == hash_output
+    it "generates a SHA512 digest of the given string" do
+      expect(Digest.hash("123456")).to be == sha512_hash
     end
   end
 
   describe ".kdf" do
     before { Setting.stub(pbkdf_iterations: 1) }
 
-    it "generates a pbkdf2 hash using given password and salt" do
-      expect(Digest.kdf("123456", "<salt>")).to be == kdf_output
+    it "generates a PBKDF2 hash of the given string" do
+      expect(Digest.kdf("123456", "my salt")).to be == pbkdf2_hash
+    end
+
+    it "generates a PBKDF2 hash using the given length" do
+      expect(Digest.kdf("123456", "my salt", 32)).to be == pbkdf2_hash_32
     end
   end
 end
