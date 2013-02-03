@@ -8,17 +8,17 @@ class AuthorService
   end
 
   def valid_password?(password)
-    salt, hash = @author.hashed_password.unpack("a64 a*")
-    hash === Digest.kdf(Digest.hash(password), salt)
+    salt, hash = @author.hashed_password.unpack("a128 a*")
+    hash === Digest.kdf(password, salt)
   end
 
   private
 
   def hash_password
-    salt = OpenSSL::Random.random_bytes(64)
-    hash = Digest.kdf(Digest.hash(@author.password), salt)
+    salt = OpenSSL::Random.random_bytes(128)
+    hash = Digest.kdf(@author.password, salt)
 
-    @author.hashed_password = [salt, hash].pack("a64 a*")
+    @author.hashed_password = [salt, hash].pack("a128 a*")
     true
   end
 end

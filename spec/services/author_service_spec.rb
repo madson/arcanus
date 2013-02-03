@@ -3,8 +3,7 @@ require "spec_helper"
 describe AuthorService do
   let(:author) { double }
   let(:password) { "123456" }
-  let(:salt) { "A" * 64 }
-  let(:hash) { "<hashed password>" }
+  let(:salt) { "A" * 128 }
   let(:kdf) { "<kdf password>" }
   let(:hashed_password) { salt + kdf }
 
@@ -26,8 +25,7 @@ describe AuthorService do
     it "hashes password and then saves author" do
       OpenSSL::Random.stub(random_bytes: salt)
 
-      Digest.should_receive(:hash).with(password).and_return(hash)
-      Digest.should_receive(:kdf).with(hash, salt).and_return(kdf)
+      Digest.should_receive(:kdf).with(password, salt).and_return(kdf)
 
       author.stub(valid?: true)
       author.should_receive(:hashed_password=).with(salt + kdf)
@@ -39,8 +37,7 @@ describe AuthorService do
 
   describe "#valid_password?" do
     it "returns true when given password is valid" do
-      Digest.should_receive(:hash).with(password).and_return(hash)
-      Digest.should_receive(:kdf).with(hash, salt).and_return(kdf)
+      Digest.should_receive(:kdf).with(password, salt).and_return(kdf)
 
       expect(subject.valid_password?(password)).to be_true
     end
@@ -48,8 +45,7 @@ describe AuthorService do
     it "returns false when given password is wrong" do
       password = "wrong password"
 
-      Digest.should_receive(:hash).with(password).and_return(hash)
-      Digest.should_receive(:kdf).with(hash, salt).and_return("<wrong kdf>")
+      Digest.should_receive(:kdf).with(password, salt).and_return("<wrong kdf>")
 
       expect(subject.valid_password?(password)).to be_false
     end
