@@ -7,13 +7,17 @@ module Helpers
     auth = Rack::Auth::Basic::Request.new(request.env)
     return unless auth.provided? && auth.basic? && auth.credentials
 
-    name, @password = auth.credentials
+    name, password = auth.credentials
 
-    @author = Author.find_by(name: name)
-    return if @author.nil?
+    author = Author.find_by(name: name)
+    return if author.nil?
 
-    service = AuthorService.new(@author)
-    service.valid_password?(@password)
+    service = AuthorService.new(author)
+
+    if service.valid_password?(password)
+      @author = author
+      @author_key = Digest.hash(password)
+    end
   end
 
   def current_author
@@ -21,7 +25,7 @@ module Helpers
   end
 
   def current_author_key
-    @password
+    @author_key
   end
 
   def json(*args)
